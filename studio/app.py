@@ -16,6 +16,7 @@ from PIL import Image
 from .models import Project
 from .parser import extract_text, parse, prompts, timeline
 from . import media, tts
+from .chatcut import build_bundle
 
 ROOT=Path(os.getenv('STUDIO_DATA',Path(__file__).resolve().parent.parent/'data')).resolve()
 ROOT.mkdir(parents=True,exist_ok=True)
@@ -247,6 +248,20 @@ def export_video(pid:str,episode:int=1):
             output=media.export(p,episode,ROOT,project_dir(pid)/'exports'/jid,progress)
             return {'video':'/media/'+output.relative_to(ROOT).as_posix(),'subtitles':'/media/'+output.with_name('subtitles.srt').relative_to(ROOT).as_posix()}
         return start_job(pid,'export',work)
+
+@app.post('/api/projects/{pid}/chatcut-bundle')
+def chatcut_bundle(pid:str,episode:int=1):
+    with lock:
+        idle(pid);p=copy.deepcopy(load(pid))
+        def work(jid,progress):
+            output=build_bundle(p,episode,ROOT,project_dir(pid)/'handoffs'/jid/'chatcut_bundle.zip',progress)
+            return {'bundle':'/media/'+output.relative_to(ROOT).as_posix(),'mode':'manual_import'}
+        return start_job(pid,'chatcut',work)
+
+@app.get('/api/projects/{pid}/chatcut-bundles')
+def chatcut_bundles(pid:str):
+    load(pid)
+    return [{'bundle':'/media/'+f.relative_to(ROOT).as_posix(),'name':f.parent.name} for f in sorted(project_dir(pid).glob('handoffs/*/chatcut_bundle.zip'),key=lambda p:p.stat().st_mtime,reverse=True)]
 
 @app.get('/api/jobs/{jid}')
 def job(jid:str):
