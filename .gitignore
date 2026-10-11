@@ -1,0 +1,8 @@
+.venv/
+data/
+__pycache__/
+.pytest_cache/
+.env
+examples/demo_assets/
+dist/
+examples/老板你的恋爱脑藏不住了.txt
