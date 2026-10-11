@@ -4,12 +4,12 @@
 
 ## Windows 安装与启动
 
-1. 安装 **Python 3.11+，推荐 3.12**（勾选 Add Python to PATH）。
+1. Windows 启动脚本使用 **Python 3.12**。如果已安装新版 Python 安装管理器，在命令提示符运行 `py install 3.12`，再运行 `py -3.12 --version` 验证。也可从 python.org 安装 Python 3.12（勾选 Add Python to PATH）。
 2. 安装带 `libx264`、AAC 的完整 FFmpeg；将包含 `ffmpeg.exe`、`ffprobe.exe` 的 `bin` 目录加入 Windows 用户 PATH。可从 [FFmpeg 官方下载页面](https://ffmpeg.org/download.html) 选择 Windows 构建。打开新终端运行 `ffmpeg -version`、`ffprobe -version` 确认。
 3. 在本项目目录双击 **`setup.bat`**，安装项目虚拟环境并检查依赖、编码器及中文字体。
 4. 双击 **`start.bat`**，在浏览器地址栏输入 `http://127.0.0.1:8000`。保持终端开启，按 Ctrl+C 停止。
 
-工作台只监听本机。不需要 Node.js、数据库、Docker 或前端构建。首次安装需要联网下载 Python 包；之后解析、手动制作和导出可以离线工作。启动脚本不会自动下载 FFmpeg 或更改系统 PATH。
+工作台只监听本机。不需要 Node.js、数据库、Docker 或前端构建。首次安装需要联网下载 Python 包；之后解析、手动制作和导出可以离线工作。启动脚本不会自动下载 FFmpeg 或更改系统 PATH；仅在当前进程临时将 `D:\ffmpeg\bin` 加入 PATH。脚本以 CRLF 换行保存，启动失败时保留窗口和错误。
 
 若 FFmpeg 未加入 PATH，可在启动前设置（不加引号到变量值中）：
 
@@ -85,6 +85,8 @@ Linux 需系统 FFmpeg 和中文字体（例如 Noto CJK）。macOS 可用导入
 完整备份/迁移请在停止服务后复制 **整个 data 文件夹**。项目管理页可下载/恢复 JSON，但 JSON 不包含媒体，恢复到新项目后要重新上传。可用 `STUDIO_DATA` 指定数据目录。工作台不自动删除替换后旧素材和失败导出的中间文件，方便恢复；磁盘不足时停止服务后备份再清理。导出较长剧集需要足够磁盘空间和 CPU；任务串行执行，每个 FFmpeg 最多两条编码线程。
 
 ## 常见错误
+
+- **安装管理器选择了 Python 3.15**：运行 `py install 3.12`，然后 `setup.bat`。若提示已有虚拟环境版本不符，将项目内 `.venv` 文件夹改名为 `.venv-old` 后重试；不需要卸载系统 Python，也不要删除 `data`。
 
 - **找不到 FFmpeg**：安装完整构建，加入 PATH 后重新开终端；或设置 `FFMPEG_PATH` / `FFPROBE_PATH`。
 - **找不到中文字体**：设置 `STUDIO_FONT` 为支持中文的 TTF/TTC 文件。

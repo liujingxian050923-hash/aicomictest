@@ -1,20 +1,26 @@
 @echo off
 setlocal
 set "PATH=D:\ffmpeg\bin;%PATH%"
-chcp 65001 >nul
 cd /d "%~dp0"
-if not exist ".venv\Scripts\python.exe" (
-    call setup.bat
-    if errorlevel 1 exit /b 1
-)
-.venv\Scripts\python.exe check_environment.py
-if errorlevel 1 (
-    echo 请先运行 setup.bat 并处理缺失依赖或 FFmpeg。
-    pause
-    exit /b 1
-)
+echo [Studio] Starting from: %CD%
+if exist ".venv\Scripts\python.exe" goto environment_check
+echo [Studio] First launch: running setup.bat...
+call setup.bat
+if errorlevel 1 goto fail
+:environment_check
+echo [Studio] Checking the Python environment...
+".venv\Scripts\python.exe" -c "import sys; assert sys.version_info[:2] == (3,12), 'Rename the existing .venv folder to .venv-old and run setup.bat with Python 3.12.'"
+if errorlevel 1 goto fail
+".venv\Scripts\python.exe" check_environment.py
+if errorlevel 1 goto fail
 echo.
-echo 浏览器打开 http://127.0.0.1:8000
- echo 保持此窗口开启，按 Ctrl+C 停止服务。
-.venv\Scripts\python.exe -m uvicorn studio.app:app --host 127.0.0.1 --port 8000
-if errorlevel 1 pause
+echo Open http://127.0.0.1:8000 in your browser after Uvicorn starts.
+echo Keep this window open. Press Ctrl+C to stop the server.
+".venv\Scripts\python.exe" -m uvicorn studio.app:app --host 127.0.0.1 --port 8000
+if errorlevel 1 goto fail
+exit /b 0
+:fail
+echo.
+echo Startup failed. Read the error above and run setup.bat if needed.
+pause
+exit /b 1

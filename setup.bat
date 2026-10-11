@@ -1,29 +1,42 @@
 @echo off
 setlocal
-chcp 65001 >nul
+set "PATH=D:\ffmpeg\bin;%PATH%"
 cd /d "%~dp0"
+echo [Setup] Checking Python 3.12...
 where py >nul 2>nul
-if not errorlevel 1 (
-    set "STUDIO_PY=py -3"
-) else (
-    set "STUDIO_PY=python"
-)
-%STUDIO_PY% -c "import sys; assert sys.version_info >= (3,11), 'Python 3.11+ required'"
+if errorlevel 1 goto python_fallback
+set "STUDIO_PY=py -3.12"
+goto python_check
+:python_fallback
+set "STUDIO_PY=python"
+:python_check
+%STUDIO_PY% -c "import sys; print(sys.version); assert sys.version_info[:2] == (3,12), 'Use Python 3.12 for this Windows launcher'"
+if errorlevel 1 goto python_missing
+if exist ".venv\Scripts\python.exe" goto venv_check
+echo [Setup] Creating the virtual environment...
+%STUDIO_PY% -m venv .venv
 if errorlevel 1 goto fail
-if not exist ".venv\Scripts\python.exe" (
-    %STUDIO_PY% -m venv .venv
-    if errorlevel 1 goto fail
-)
-.venv\Scripts\python.exe -m pip install -r requirements.txt
+:venv_check
+".venv\Scripts\python.exe" -c "import sys; assert sys.version_info[:2] == (3,12), 'Existing .venv is not Python 3.12. Rename it to .venv-old, then run setup.bat again.'"
 if errorlevel 1 goto fail
-.venv\Scripts\python.exe check_environment.py
+echo [Setup] Installing dependencies. Please wait...
+".venv\Scripts\python.exe" -m pip install -r requirements.txt
+if errorlevel 1 goto fail
+echo [Setup] Checking FFmpeg and fonts...
+".venv\Scripts\python.exe" check_environment.py
 if errorlevel 1 goto fail
 echo.
-echo 安装完成。双击 start.bat 启动工作台。
+echo Setup completed. Run start.bat to open the studio.
 pause
 exit /b 0
+:python_missing
+echo.
+echo Python 3.12 was not found. In Command Prompt, run:
+echo     py install 3.12
+echo Then run setup.bat again.
+echo If you use the older Python launcher, install Python 3.12 from python.org.
 :fail
 echo.
-echo 安装或环境检查失败。请根据上面的提示处理后重新运行。
+echo Setup failed. The error is shown above. This window will stay open.
 pause
 exit /b 1
